@@ -407,11 +407,15 @@ def train_bert(nlp_train, nlp_test, return_features=True, model_name='microsoft/
                                              dim=1)
 
             # construct the target similarity matrix
-            target_matrix = torch.zeros(sim_matrix.shape).cuda()
-            for i in range(target_matrix.size(0)):
-                bool_mask = (y == y[i]).type(torch.float)
-                # target_matrix[i] = bool_mask / (bool_mask.sum() + 1e-8)      # normalize s.t. sum up to 1. Wrong, no need to norm!
-                target_matrix[i] = bool_mask
+#             target_matrix = torch.zeros(sim_matrix.shape).cuda()
+#             for i in range(target_matrix.size(0)):
+#                 bool_mask = (y == y[i]).type(torch.float)
+#                 # target_matrix[i] = bool_mask / (bool_mask.sum() + 1e-8)      # normalize s.t. sum up to 1. Wrong, no need to norm!
+#                 target_matrix[i] = bool_mask
+                
+            y_matrix = torch.transpose(y.unsqueeze(-1).expand((y.shape[0], y.shape[0])), 0, 1)
+            y_target = y.unsqueeze(-1).expand((y.shape[0], y.shape[0]))
+            target_matrix = (y_matrix == y_target)
 
             # contrastive loss. for the input to kl div,
             loss_2 = F.kl_div(F.softmax(sim_matrix/temperature).log(), F.softmax(target_matrix/temperature),
